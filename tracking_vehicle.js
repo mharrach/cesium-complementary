@@ -8,12 +8,17 @@ var viewer = new Cesium.Viewer("cesiumContainer", {
 });
 viewer.scene.globe.depthTestAgainstTerrain = true;
 
-var tileset = viewer.scene.primitives.add(
-    new Cesium.Cesium3DTileset({
-        url: Cesium.IonResource.fromAssetId(265290),
-        maximumScreenSpaceError: 1 //to prevent model from disappearing on zoom in/out (but doesn't work)
-    })
-);
+var assetsList = [265710, 265727, 265780, 265463, 265290, 265395]; //there is a problem with asset number 265431 (Area_39)
+
+for (let i = 0; i < assetsList.length; i++) {
+    const asset = assetsList[i];
+    var tileset = viewer.scene.primitives.add(
+        new Cesium.Cesium3DTileset({
+            url: Cesium.IonResource.fromAssetId(asset),
+            maximumScreenSpaceError: 1 //to prevent model from disappearing on zoom in/out (but doesn't work)
+        })
+    );
+}
 
 tileset.readyPromise.then(function() {
     viewer.zoomTo(tileset);
