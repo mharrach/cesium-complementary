@@ -111,10 +111,10 @@ function start() {
     clock.shouldAnimate = true;
     var objectsToExclude = [entity];
     scene.postRender.addEventListener(function() {
-        for (let j = 0; j < positionProperty.length; j++) {
+        /*for (let j = 0; j < positionProperty.length; j++) {
             const position = positionProperty[j];
             entity.position = scene.clampToHeight(position, objectsToExclude);
-        }
+        }*/
         //var position = positionProperty.getValue(clock.currentTime);
         //entity.position = scene.clampToHeight(position, objectsToExclude);
     });
