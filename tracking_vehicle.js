@@ -6,6 +6,7 @@ var viewer = new Cesium.Viewer("cesiumContainer", {
     terrainProvider: new Cesium.CesiumTerrainProvider({
         url: Cesium.IonResource.fromAssetId(1),
     }),
+    //terrainProvider: Cesium.createWorldTerrain(),
 });
 viewer.scene.globe.depthTestAgainstTerrain = true;
 
@@ -39,10 +40,9 @@ tileset.readyPromise.then(function() {
 // setting up the path and model
 var scene = viewer.scene;
 var clock = viewer.clock;
+var coordinatesList = [];
 
-var positionProperty = [];
-
-var dataSourcePromise = Cesium.GeoJsonDataSource.load('Irisbus_path.geojson', {
+/*var dataSourcePromise = Cesium.GeoJsonDataSource.load('Irisbus_path.geojson', {
     stroke: Cesium.Color.HOTPINK,
     fill: Cesium.Color.PINK,
     strokeWidth: 3,
@@ -54,7 +54,7 @@ dataSourcePromise.then(function(dataSource) {
     viewer.dataSources.add(dataSource);
 }).otherwise(function(error) {
     window.alert(error);
-});
+});*/
 
 var xmlhttp = new XMLHttpRequest();
 var url = "Irisbus_path.geojson";
@@ -72,10 +72,10 @@ function myFunction(geojson) {
     var coordinates = geojson.features[0].geometry.coordinates[0];
     for (let i = 0; i < coordinates.length; i++) {
         const element = coordinates[i];
-        positionProperty.push(element[0], element[1], 0);
+        coordinatesList.push(element[0], element[1], 0);
     }
     //Compute the entity position property.
-    var position = computeBusPath(positionProperty);
+    var position = computeBusPath(coordinatesList);
 
     //Actually create the entity
     var entity = viewer.entities.add({
@@ -100,8 +100,8 @@ function myFunction(geojson) {
             maximumPixelSize: 80
         },
 
-        //Show the path as a pink line sampled in 1 second increments.
-        /*path: {
+        //Show the path as a yellow line sampled in 1 second increments.
+        path: {
             resolution: 1,
             material: new Cesium.PolylineGlowMaterialProperty({
                 glowPower: 0.1,
@@ -109,8 +109,7 @@ function myFunction(geojson) {
             }),
             width: 10,
         },
-
-        clampToGround: true*/
+        clampToGround: true
     });
     entity.position.setInterpolationOptions({
         interpolationDegree: 1,
@@ -123,7 +122,7 @@ function myFunction(geojson) {
 var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
 var stop = Cesium.JulianDate.addSeconds(
     start,
-    560,
+    220,
     new Cesium.JulianDate()
 );
 
@@ -132,26 +131,44 @@ viewer.clock.startTime = start.clone();
 viewer.clock.stopTime = stop.clone();
 viewer.clock.currentTime = start.clone();
 viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; //Loop at the end
-viewer.clock.multiplier = 10;
+viewer.clock.multiplier = 5;
 
 //Set timeline to simulation bounds
 viewer.timeline.zoomTo(start, stop);
 
-//Generate the vehicle path
+//Generate a random circular pattern with varying heights.
 function computeBusPath(posList) {
     var property = new Cesium.SampledPositionProperty();
-    for (var i = 0; i <= posList.length - 3; i += 3) {
-        var time = Cesium.JulianDate.addSeconds(
-            start,
-            i + 45,
-            new Cesium.JulianDate()
-        );
-        var position = Cesium.Cartesian3.fromDegrees(
-            posList[i],
-            posList[i + 1],
-            posList[i + 2] + 50 // added 50 to prevent the vehicle from sinking under the terrain
-        );
-        property.addSample(time, position);
+    // Query the terrain height of two Cartographic positions
+    var terrainProvider = viewer.terrainProvider;
+    var positions = [];
+    var finalPositions = []
+    for (let j = 0; j <= posList.length - 3; j += 3) {
+        positions.push(Cesium.Cartographic.fromDegrees(posList[j], posList[j + 1]));
     }
+    var promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positions);
+    Cesium.when(promise, function(updatedPositions) {
+        // positions[0].height and positions[1].height have been updated.
+        // updatedPositions is just a reference to positions.
+        for (let k = 0; k < positions.length; k++) {
+            const element = positions[k];
+            finalPositions.push(Cesium.Cartographic.toCartesian(element));
+        }
+        for (var i = 0; i <= finalPositions.length; i++) {
+            var time = Cesium.JulianDate.addSeconds(
+                start,
+                i + 45,
+                new Cesium.JulianDate()
+            );
+            /*var position = Cesium.Cartesian3.fromDegrees(
+                posList[i],
+                posList[i + 1],
+                posList[i + 2] + 50 // added 50 to prevent the vehicle from sinking under the terrain
+            );*/
+            var position = finalPositions[i];
+            property.addSample(time, position);
+        }
+    });
+
     return property;
 }
