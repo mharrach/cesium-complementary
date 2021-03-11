@@ -138,13 +138,12 @@ function computeBusPath(positionsList) {
         for (var l = 0; l <= sampledPositions.length; l++) {
             var time = Cesium.JulianDate.addSeconds(
                 start,
-                l + 45,
+                l,
                 new Cesium.JulianDate()
             );
             var position = sampledPositions[l];
             property.addSample(time, position);
         }
     });
-
     return property;
 }
