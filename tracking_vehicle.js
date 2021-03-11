@@ -3,10 +3,9 @@ Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 
 var viewer = new Cesium.Viewer("cesiumContainer", {
     shouldAnimate: true, // Enable animations
-    /*terrainProvider: new Cesium.CesiumTerrainProvider({
+    terrainProvider: new Cesium.CesiumTerrainProvider({
         url: Cesium.IonResource.fromAssetId(1),
-    }),*/
-    terrainProvider: Cesium.createWorldTerrain(),
+    }),
 });
 viewer.scene.globe.depthTestAgainstTerrain = true;
 
@@ -36,12 +35,6 @@ tileset.readyPromise.then(function() {
 }).otherwise(function(error) {
     console.log(error);
 });
-
-/*if (scene.clampToHeightSupported) {
-    tileset.initialTilesLoaded.addEventListener(start);
-} else {
-    window.alert("This browser does not support clampToHeight.");
-}*/
 
 // setting up the path and model
 var scene = viewer.scene;
@@ -119,6 +112,10 @@ function myFunction(geojson) {
 
         clampToGround: true*/
     });
+    entity.position.setInterpolationOptions({
+        interpolationDegree: 1,
+        interpolationAlgorithm: Cesium.LinearApproximation,
+    });
 
 }
 
@@ -140,7 +137,7 @@ viewer.clock.multiplier = 10;
 //Set timeline to simulation bounds
 viewer.timeline.zoomTo(start, stop);
 
-//Generate a random circular pattern with varying heights.
+//Generate the vehicle path
 function computeBusPath(posList) {
     var property = new Cesium.SampledPositionProperty();
     for (var i = 0; i <= posList.length - 3; i += 3) {
@@ -152,7 +149,7 @@ function computeBusPath(posList) {
         var position = Cesium.Cartesian3.fromDegrees(
             posList[i],
             posList[i + 1],
-            posList[i + 2] + 50
+            posList[i + 2] + 50 // added 50 to prevent the vehicle from sinking under the terrain
         );
         property.addSample(time, position);
     }
