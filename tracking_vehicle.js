@@ -54,6 +54,24 @@ xmlhttp.onreadystatechange = function() {
 xmlhttp.open("GET", url, true);
 xmlhttp.send();
 
+//Set bounds of our simulation time
+var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
+var stop = Cesium.JulianDate.addSeconds(
+    start,
+    220,
+    new Cesium.JulianDate()
+);
+
+//Make sure viewer is at the desired time.
+viewer.clock.startTime = start.clone();
+viewer.clock.stopTime = stop.clone();
+viewer.clock.currentTime = start.clone();
+viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; //Loop at the end
+viewer.clock.multiplier = 5;
+
+//Set timeline to simulation bounds
+viewer.timeline.zoomTo(start, stop);
+
 function processJsonData(geojson) {
     var coordinates = geojson.features[0].geometry.coordinates[0]; //Get the raw coordinates
     for (let i = 0; i < coordinates.length; i++) {
@@ -99,31 +117,13 @@ function processJsonData(geojson) {
     //viewer.trackedEntity = entity;
 }
 
-//Set bounds of our simulation time
-var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
-var stop = Cesium.JulianDate.addSeconds(
-    start,
-    220,
-    new Cesium.JulianDate()
-);
-
-//Make sure viewer is at the desired time.
-viewer.clock.startTime = start.clone();
-viewer.clock.stopTime = stop.clone();
-viewer.clock.currentTime = start.clone();
-viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; //Loop at the end
-viewer.clock.multiplier = 5;
-
-//Set timeline to simulation bounds
-viewer.timeline.zoomTo(start, stop);
-
 //Generate the path with sampled heights.
 function computeBusPath(positionsList) {
     var property = new Cesium.SampledPositionProperty();
     //Query the terrain height of two Cartographic positions
     var terrainProvider = viewer.terrainProvider;
     var cartoCoordinates = [];
-    var sampledPositions = []
+    var sampledPositions = [];
     for (let j = 0; j <= positionsList.length - 3; j += 3) {
         cartoCoordinates.push(Cesium.Cartographic.fromDegrees(positionsList[j], positionsList[j + 1]));
     }
