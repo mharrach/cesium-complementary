@@ -58,7 +58,7 @@ xmlhttp.send();
 var start = Cesium.JulianDate.fromDate(new Date(2015, 2, 25, 16));
 var stop = Cesium.JulianDate.addSeconds(
     start,
-    220,
+    180,
     new Cesium.JulianDate()
 );
 
@@ -67,7 +67,7 @@ viewer.clock.startTime = start.clone();
 viewer.clock.stopTime = stop.clone();
 viewer.clock.currentTime = start.clone();
 viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; //Loop at the end
-viewer.clock.multiplier = 5;
+viewer.clock.multiplier = 2.5;
 
 //Set timeline to simulation bounds
 viewer.timeline.zoomTo(start, stop);
@@ -76,7 +76,7 @@ function processJsonData(geojson) {
     var coordinates = geojson.features[0].geometry.coordinates[0]; //Get the raw coordinates
     for (let i = 0; i < coordinates.length; i++) {
         const element = coordinates[i];
-        rawCoordinates.push(element[0], element[1], 0);
+        rawCoordinates.push(Cesium.Cartographic.fromDegrees(element[0], element[1], 0));
     }
     //Compute the entity position property.
     var position = computeBusPath(rawCoordinates);
@@ -111,7 +111,7 @@ function processJsonData(geojson) {
         }
     });
     entity.position.setInterpolationOptions({
-        interpolationDegree: 1,
+        interpolationDegree: 5,
         interpolationAlgorithm: Cesium.LinearApproximation,
     });
     //viewer.trackedEntity = entity;
@@ -122,26 +122,16 @@ function computeBusPath(positionsList) {
     var property = new Cesium.SampledPositionProperty();
     //Query the terrain height of two Cartographic positions
     var terrainProvider = viewer.terrainProvider;
-    var cartoCoordinates = [];
-    var sampledPositions = [];
-    for (let j = 0; j <= positionsList.length - 3; j += 3) {
-        cartoCoordinates.push(Cesium.Cartographic.fromDegrees(positionsList[j], positionsList[j + 1]));
-    }
-    var promise = Cesium.sampleTerrainMostDetailed(terrainProvider, cartoCoordinates);
+    var promise = Cesium.sampleTerrainMostDetailed(terrainProvider, positionsList);
     Cesium.when(promise, function(updatedPositions) {
-        //cartoCoordinates has been updated with the new positions
-        //UpdatedPositions is just a reference to cartoCoordinates.
-        for (let k = 0; k < cartoCoordinates.length; k++) {
-            const element = cartoCoordinates[k];
-            sampledPositions.push(Cesium.Cartographic.toCartesian(element));
-        }
-        for (var l = 0; l <= sampledPositions.length; l++) {
+        for (var i = 0; i <= updatedPositions.length; i++) {
+            const element = updatedPositions[i];
             var time = Cesium.JulianDate.addSeconds(
                 start,
-                l,
+                i,
                 new Cesium.JulianDate()
             );
-            var position = sampledPositions[l];
+            var position = Cesium.Cartographic.toCartesian(element);
             property.addSample(time, position);
         }
     });
