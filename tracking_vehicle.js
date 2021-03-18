@@ -16,7 +16,9 @@ for (let i = 0; i < assetsList.length; i++) {
     var tileset = viewer.scene.primitives.add(
         new Cesium.Cesium3DTileset({
             url: Cesium.IonResource.fromAssetId(asset),
-            maximumScreenSpaceError: 1 //to prevent model from disappearing on zoom in/out (but doesn't work)
+            //Prevent cesium from crashing when loading large 3D tiles
+            maximumScreenSpaceError: 32,
+            maximumMemoryUsage: 256
         })
     );
 }
